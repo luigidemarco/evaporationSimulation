@@ -31,8 +31,16 @@ m = 127 * u  # Mass in kg
 d = 0.2 * D2CM  # Dipole moment in C m
 T0 = 600E-9  # Initial temperature
 
-reactiveCrossSection = 4.28E-4  # 2D Cross-section @ 0.2D in [um] PHYSICAL REVIEW A 81, 060701(R) (2010)
-elasticCrossSection = reactiveCrossSection * 127.0
+def reactive_cs(vrel):
+    # Reactive cross-section based on linear fit to data
+    # 0.2D and 23 kHz Trap (ArXiV 1311.0429)
+    return 5.763E-5*vrel - 7.05277E-5
+
+
+def elastic_cs(vrel):
+    # Reactive cross-section based on quartic fit to data
+    # 0.2D and 23 kHz Trap (ArXiV 1311.0429)
+    return -7.525E-6*vrel*vrel*vrel*vrel + 3.095E-4*vrel*vrel*vrel - 4.731E-3*vrel*vrel + 2.913E-2*vrel - 1.469E-3
 
 
 """ --------------------------------------- Trap parameters """
@@ -56,9 +64,6 @@ emax = tleninv * Ud
 
 sigmaVelocity = np.sqrt(kB * T0 / m)
 sigmaPosition = sigmaVelocity / omega
-
-inelasticProbability = reactiveCrossSection / (reactiveCrossSection + elasticCrossSection)
-totalCrossSection = reactiveCrossSection + elasticCrossSection
 
 collisionProbabilityFactor = tau/(np.pi*collisionCutoff*collisionCutoff)
 

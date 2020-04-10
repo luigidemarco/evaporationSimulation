@@ -88,9 +88,7 @@ def collision_check(r, colcut=0.1):
 def collision_montecarlo(colList, V):
     n = len(colList)
 
-    # First determine whether each collision is elastic or inelastic
-    pEvI = np.random.random(n) > inelasticProbability  # True is an elastic collision, False is inelastic
-
+    pEvI = np.random.random(n)  # Probabilities for reactive collision
     P = np.random.random(n)  # Probabilities for the montecarlo
     reactiveSuccess = []
     elasticSuccess = []
@@ -101,10 +99,17 @@ def collision_montecarlo(colList, V):
         dVy = V[k[0], 1] - V[k[1], 1]
 
         VRel = np.sqrt(dVx * dVx + dVy * dVy)
-        print(VRel * collisionProbabilityFactor * totalCrossSection)
+
+        elasticCrossSection = elastic_cs(VRel)
+        reactiveCrossSection = reactive_cs(VRel)
+
+        totalCrossSection = reactiveCrossSection + elasticCrossSection
+        inelasticProbability = reactiveCrossSection / (reactiveCrossSection + elasticCrossSection)
+
+        # print(VRel * collisionProbabilityFactor * totalCrossSection)
         if VRel * collisionProbabilityFactor * totalCrossSection > P[j]:
 
-            if pEvI[j]:
+            if pEvI[j] > inelasticProbability:
                 # Elastic collisions
                 elasticSuccess.append(k)
 
@@ -117,8 +122,6 @@ def collision_montecarlo(colList, V):
 
                 V[k[0], :] = VCOM + 0.5 * VDIFROT
                 V[k[1], :] = VCOM - 0.5 * VDIFROT
-
-
 
             else:
                 # Reactive collisions
@@ -148,6 +151,7 @@ def write_params_file():
     f = open(savePath, 'w')
     f.write('Simulation name: {}\n'.format(filename))
     f.write('Simulation started: {} at {}\n\n'.format(date_string, time_string))
+    print('Simulation started: {} at {}\n\n'.format(date_string, time_string))
 
     f.write('########### Simulation Parameters ###########\n\n')
     f.write(
@@ -164,8 +168,8 @@ def write_params_file():
     f.write(
         'MASS: {} AMU\nDIPOLE: {} D\nTEMP: {} nK\nINELASTIC_CS: {} um\nELASTIC_CS: {} um\n\n'.format(m / u, d / D2CM,
                                                                                                      T0 * 1E9,
-                                                                                                     reactiveCrossSection,
-                                                                                                     elasticCrossSection))
+                                                                                                     "na",
+                                                                                                     "na"))
 
     f.write('########### Trap Parameters ###########\n\n')
     f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\n\n'.format(Ud / kB * 1E6, omega / (2.0 * np.pi), a, b))
