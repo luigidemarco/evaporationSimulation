@@ -1,8 +1,8 @@
 """ Global parameters file for evaporation simulation """
 import numpy as np
 
-filename = "testo"
-filepath = "./scratch/"
+filename = "NoEvaporation_20200410_00"
+filepath = "../evaporationResults/"
 
 """ --------------------------------------- Constants """
 
@@ -13,10 +13,10 @@ D2CM = 3.33564E-30
 
 """ --------------------------------------- Simulation parameters """
 
-tmax = 0.5  # Time in ms
+tmax = 1000  # Time in ms
 tau = 0.002  # Time step in ms
 writeEvery = 0.1  # Timestep to write the data in ms
-N = 8  # Number of particles
+N = 2000  # Number of particles
 
 bound = 150.
 dipoleCutoff = 0.6
@@ -29,7 +29,7 @@ evaporationRamp = 20.0
 
 m = 127 * u  # Mass in kg
 d = 0.2 * D2CM  # Dipole moment in C m
-T0 = 600E-9  # Initial temperature
+T0 = 300E-9  # Initial temperature
 
 def reactive_cs(vrel):
     # Reactive cross-section based on linear fit to data

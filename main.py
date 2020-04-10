@@ -14,7 +14,7 @@ V0 = initialize_velocities(N)
 
 # Remove particles initialized out of bounds or within 0.02 um of each other
 particlesOOB = particles_out_of_bounds(R0, bound)
-particlesCollision = collision_check(R0, 0.02)
+particlesCollision = np.array(collision_check(R0, 0.02)).flatten()
 particlesRemoval = np.unique(np.concatenate((particlesCollision, particlesOOB)))
 
 R0 = np.delete(R0, particlesRemoval, 0)
