@@ -2,7 +2,7 @@
 import numpy as np
 
 filename = "NoEvaporation_20200410_00"
-filepath = "../evaporationResults/"
+filepath = "./results/"
 
 """ --------------------------------------- Constants """
 

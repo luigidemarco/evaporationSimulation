@@ -12,8 +12,9 @@ kB = 1.38E-23
 omega = 2 * np.pi * 35
 m = 127 * 1.6E-27
 
-filePath = './'
-files = ['NoEvaporation_20200410_00.out']
+filePath = './results/'
+files = ['NoEvaporation_20200411_00.out']
+excludeTime = 0.04
 
 for k in files:
     data = np.loadtxt(filePath + k)
@@ -26,8 +27,8 @@ for k in files:
     volume = 4 * np.pi * (np.sqrt(kB * temperature * 1E-9 / m) / omega) ** 2
     density = number / volume * 1E-4
 
-    p_linear_temperature = np.polyfit(time, temperature, 1)
-    p_psd = np.polyfit(np.log(temperature), np.log(number), 1)
+    p_linear_temperature = np.polyfit(time[time > excludeTime], kinetic[time > excludeTime], 1)
+    p_psd = np.polyfit(np.log(temperature[time > excludeTime]), np.log(number[time > excludeTime]), 1)
 
     p0 = [4E7, 1E-7]
     pUpper = [np.inf, 1.0]
@@ -54,13 +55,15 @@ for k in files:
     ax0.plot(time, number)
 
     ax1.plot(time, temperature)
-    ax1.plot(time, p_linear_temperature[0] * time + p_linear_temperature[1], 'r')
+    ax1.plot(time, kinetic, 'g')
+    ax1.plot(time[time > excludeTime], p_linear_temperature[0] * time[time > excludeTime] + p_linear_temperature[1], 'r')
+    ax1.legend(['Temperature', 'Kinetic Temperature'])
 
     ax2.plot(time, density / 1E7)
-    ax2.plot(time, two_body([n0, beta], time, 0) / 1E7, 'r--')
+    ax2.plot(time[time > excludeTime], two_body([n0, beta], time[time > excludeTime], 0) / 1E7, 'r--')
 
     ax3.plot(np.log(temperature), np.log(number))
-    ax3.plot(np.log(temperature), p_psd[1] + p_psd[0] * np.log(temperature), 'r')
+    ax3.plot(np.log(temperature[time > excludeTime]), p_psd[1] + p_psd[0] * np.log(temperature[time > excludeTime]), 'r')
 
     j = 0
     for a in all_axes:

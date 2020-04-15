@@ -1,7 +1,19 @@
 from function_library import *
 import time as clock
+from os import path
 
+""" ------- Make sure not to overwrite file ------- """
+output_file = filepath + filename + '.out'
+if path.exists(output_file):
+    overwrite = raw_input("Are you sure you want to overwrite {}? Data will be lost! (y/N): ".format(output_file))
 
+    if overwrite.lower() == 'y':
+        print("Data in {} will be overwritten.".format(output_file))
+    else:
+        raise SystemExit("Simulation aborted. Change output file path.")
+    pass
+
+""" ------- Initialize Simulation ------- """
 write_params_file()
 resFile = open(filepath + filename + '.out', 'w')
 
