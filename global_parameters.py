@@ -13,10 +13,10 @@ D2CM = 3.33564E-30
 
 """ --------------------------------------- Simulation parameters """
 
-tmax = 1000  # Time in ms
+tmax = 0.02  # Time in ms
 tau = 0.002  # Time step in ms
 writeEvery = 0.1  # Timestep to write the data in ms
-N = 2000  # Number of particles
+N = 20  # Number of particles
 
 bound = 150.
 dipoleCutoff = 0.6

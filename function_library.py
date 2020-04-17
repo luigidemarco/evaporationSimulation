@@ -1,5 +1,53 @@
 from global_parameters import *
 import numpy as np
+import sys
+import getopt
+from os import path
+
+
+def parse_inputs(sysargv):
+    try:
+        opts, args = getopt.getopt(sysargv, "hi:o:", ["input=", "output="])
+    except getopt.GetoptError:
+        print "Unknown option specified. Specify -h for usage"
+        sys.exit()
+
+    input_file = ''
+    output_file = ''
+
+    for opt, arg in opts:
+        if opt in "-h":
+            print("main.py -i <input file> -o <output file>")
+            sys.exit()
+        elif opt in ["-i", "--input"]:
+            input_file = arg
+        elif opt in ["-o", "--output"]:
+            output_file = arg
+        else:
+            pass
+
+    if not input_file:
+        print('Input file not specified. Specify an input file to run simulation.')
+        sys.exit()
+    elif not output_file:
+        output_file = ".".join(input_file.split('.')[0:-1]) + ".out"
+        params_file = ".".join(input_file.split('.')[0:-1]) + ".params"
+        print('Output file not specified. Output will be written to {}'.format(output_file))
+
+    """ ------- Make sure not to overwrite file ------- """
+    if path.exists(output_file):
+        overwrite = raw_input("Are you sure you want to overwrite {}? Data will be lost! (y/N): ".format(output_file))
+
+        if overwrite.lower() == 'y':
+            print("Data in {} will be overwritten.".format(output_file))
+        else:
+            raise SystemExit("Simulation aborted. Change output file path.")
+        pass
+    return input_file, output_file, params_file
+
+
+def set_global_parameters(input_file):
+    pass
 
 
 def kinetic_energy(v):
@@ -140,16 +188,17 @@ def particles_out_of_bounds(r, bound):
     return np.array(np.nonzero(x)[0])
 
 
-def write_params_file():
-    savePath = filepath + filename + '.params'
+def write_params_file(params_file):
 
     from datetime import datetime
     now = datetime.now()
     date_string = now.strftime("%Y/%m/%d")
     time_string = now.strftime("%H:%M:%S")
 
-    f = open(savePath, 'w')
-    f.write('Simulation name: {}\n'.format(filename))
+    f = open(params_file, 'w')
+    simulation_name = params_file.split('/')[-1].split('.')[0]
+
+    f.write('Simulation name: {}\n'.format(simulation_name))
     f.write('Simulation started: {} at {}\n\n'.format(date_string, time_string))
     print('Simulation started: {} at {}\n\n'.format(date_string, time_string))
 

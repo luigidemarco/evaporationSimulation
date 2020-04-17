@@ -1,21 +1,16 @@
 from function_library import *
 import time as clock
 from os import path
+import sys, getopt
 
-""" ------- Make sure not to overwrite file ------- """
-output_file = filepath + filename + '.out'
-if path.exists(output_file):
-    overwrite = raw_input("Are you sure you want to overwrite {}? Data will be lost! (y/N): ".format(output_file))
+argv = sys.argv[1:]
+input_file, output_file, params_file = parse_inputs(argv)
+set_global_parameters(input_file)
 
-    if overwrite.lower() == 'y':
-        print("Data in {} will be overwritten.".format(output_file))
-    else:
-        raise SystemExit("Simulation aborted. Change output file path.")
-    pass
 
 """ ------- Initialize Simulation ------- """
-write_params_file()
-resFile = open(filepath + filename + '.out', 'w')
+write_params_file(params_file)
+resFile = open(output_file, 'w')
 
 # Initialize the positions and velocities
 R0 = initialize_positions(N)
@@ -90,7 +85,7 @@ for k in range(1, nT):
 end = clock.time()
 resFile.close()
 
-with open(filepath + filename + '.params', 'a') as f:
+with open(params_file, 'a') as f:
     f.write('#############################################\n\n')
     from datetime import datetime
 
