@@ -1,35 +1,40 @@
 """ Global parameters file for evaporation simulation """
 import numpy as np
 
-filename = "NoEvaporation_20200410_00"
-filepath = "./results/"
-
 """ --------------------------------------- Constants """
-
 eps0 = 8.8541878128E-12
 kB = 1.380649E-23
 u = 1.66053906660E-27
 D2CM = 3.33564E-30
 
-""" --------------------------------------- Simulation parameters """
 
-tmax = 0.02  # Time in ms
-tau = 0.002  # Time step in ms
-writeEvery = 0.1  # Timestep to write the data in ms
-N = 20  # Number of particles
+global_parameters = {
+    #--------------------------------------- Simulation parameters """
+    "tmax": 0.02,  # Time in ms
+    "tau": 0.002,  # Time step in ms
+    "equilibrationtime": 0.0,
+    "writeevery": 0.1,  # Timestep to write the data in ms
 
-bound = 150.
-dipoleCutoff = 0.6
-collisionCutoff = 0.05
+    "n": 20,
+    
+    "bound": 150,
+    "collisioncutoff": 0.05,
 
-equilibrationTime = 20.0
-evaporationRamp = 20.0
+    # --------------------------------------- Particle parameters
+    "m": 127 * u,  # Mass in kg
+    "t": 300E-9,  # Initial temperature
+    "inelastic": True,  # Set false to turn off inelastic collisions
 
-""" --------------------------------------- Particle parameters """
-
-m = 127 * u  # Mass in kg
-d = 0.2 * D2CM  # Dipole moment in C m
-T0 = 300E-9  # Initial temperature
+    # --------------------------------------- Trap parameters
+    "depth": 2.5 * 1E-6 * kB,  # Trap depth in J
+    "freq": 2 * np.pi * 35,
+    
+    
+    # --------------------------------------- Evaporation parameters
+    "a": 0.1 * 0,
+    "b": 0.1 * 0,
+    "evaporationramp": 20.0
+}
 
 def reactive_cs(vrel):
     # Reactive cross-section based on linear fit to data
@@ -43,30 +48,23 @@ def elastic_cs(vrel):
     return -7.525E-6*vrel*vrel*vrel*vrel + 3.095E-4*vrel*vrel*vrel - 4.731E-3*vrel*vrel + 2.913E-2*vrel - 1.469E-3
 
 
-""" --------------------------------------- Trap parameters """
-
-Ud = 2.5 * 1E-6 * kB  # Trap depth in J
-omega = 2 * np.pi * 35
-
-
-""" --------------------------------------- Evaporation parameters """
-
-a = 0.1 * 0
-b = 0.1 * 0
-
 """ --------------------------------------- Derived parameters """
 
-sigtrapinv = m * omega * omega / (2. * Ud)
-fmax = m * omega * omega
+sigtrapinv = global_parameters["m"] * global_parameters['freq'] * global_parameters['freq'] \
+             / (2. * global_parameters['depth'])
 
-tleninv = np.sqrt(fmax / Ud)
-emax = tleninv * Ud
+fmax = global_parameters['m'] * global_parameters['freq'] * global_parameters['freq']
 
-sigmaVelocity = np.sqrt(kB * T0 / m)
-sigmaPosition = sigmaVelocity / omega
+tleninv = np.sqrt(fmax / global_parameters['depth'])
 
-collisionProbabilityFactor = tau/(np.pi*collisionCutoff*collisionCutoff)
+emax = tleninv * global_parameters['depth']
 
-time = np.arange(0, tmax + tau, tau)
+sigmaVelocity = np.sqrt(kB * global_parameters['t'] / global_parameters['m'])
+sigmaPosition = sigmaVelocity / global_parameters['freq']
+
+collisionProbabilityFactor = global_parameters['tau']/(np.pi*global_parameters['collisioncutoff']
+                                                       * global_parameters['collisioncutoff'])
+
+time = np.arange(0, global_parameters['tmax'] + global_parameters['tau'], global_parameters['tau'])
 nT = len(time)
-writeEveryInv = 1.0 / writeEvery
+writeEveryInv = 1.0 / global_parameters['writeevery']

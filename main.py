@@ -13,14 +13,14 @@ write_params_file(params_file)
 resFile = open(output_file, 'w')
 
 # Initialize the positions and velocities
-R0 = initialize_positions(N)
-V0 = initialize_velocities(N)
+R0 = initialize_positions(global_parameters['n'])
+V0 = initialize_velocities(global_parameters['n'])
 
 # R0 = np.array([[10,0.00],[-10,-0.00]])
 # V0 = np.array([[-15,0],[15,0]])
 
 # Remove particles initialized out of bounds or within 0.02 um of each other
-particlesOOB = particles_out_of_bounds(R0, bound)
+particlesOOB = particles_out_of_bounds(R0, global_parameters['bound'])
 particlesCollision = np.array(collision_check(R0, 0.02)).flatten()
 particlesRemoval = np.unique(np.concatenate((particlesCollision, particlesOOB)))
 
@@ -46,10 +46,11 @@ resFile.write('{}\t{:.4e}\t{:.4e}\t{:0.0f}'.format(time[0], T, U, pN))
 for k in range(1, nT):
     # Calculate the Verlet Equations
 
-    R = R0 + tau * V0 + tau * tau * F0 * 0.5 / m
+    R = R0 + global_parameters['tau'] * V0 \
+        + global_parameters['tau'] * global_parameters['tau'] * F0 * 0.5 / global_parameters['m']
 
-    particlesCollision = collision_check(R, collisionCutoff)
-    particlesOOB = particles_out_of_bounds(R, bound)
+    particlesCollision = collision_check(R, global_parameters['collisioncutoff'])
+    particlesOOB = particles_out_of_bounds(R, global_parameters['bound'])
 
     V0, elasticPairs, inelasticPairs = collision_montecarlo(particlesCollision, V0)
 
@@ -63,7 +64,7 @@ for k in range(1, nT):
     F0 = np.delete(F0, particlesRemoval, 0)
 
     F = trap_force(R) + evap_force(R, time[k])
-    V = V0 + tau * (F0 + F) * 0.5 / m
+    V = V0 + global_parameters['tau'] * (F0 + F) * 0.5 / global_parameters['m']
 
     # Verlet integration complete
     # Store important time step info at this point

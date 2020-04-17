@@ -33,6 +33,8 @@ def parse_inputs(sysargv):
         output_file = ".".join(input_file.split('.')[0:-1]) + ".out"
         params_file = ".".join(input_file.split('.')[0:-1]) + ".params"
         print('Output file not specified. Output will be written to {}'.format(output_file))
+    else:
+        params_file = ".".join(output_file.split('.')[0:-1]) + ".params"
 
     """ ------- Make sure not to overwrite file ------- """
     if path.exists(output_file):
@@ -52,7 +54,7 @@ def set_global_parameters(input_file):
 
 def kinetic_energy(v):
     x = v * v * 1E-6
-    return 0.5 * m * (x[:, 0] + x[:, 1])
+    return 0.5 * global_parameters['m'] * (x[:, 0] + x[:, 1])
 
 
 def potential_energy(r):
@@ -60,27 +62,30 @@ def potential_energy(r):
     # return -Ud * 0.5 * (
     #        np.exp(-sigtrapinv * r[:, 0] * r[:, 0] * 1E-12) + np.exp(-sigtrapinv * r[:, 1] * r[:, 1] * 1E-12)) + Ud
 
-    return Ud - Ud * np.exp(-sigtrapinv * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
+    return global_parameters['depth'] - global_parameters['depth'] \
+           * np.exp(-sigtrapinv * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
 
 
 def trap_force(r):
     # Accepts an N x 2 matrix of positions, and returns an N x 2 matrix of forces
     # Positions should be in Microns
     # The force is returned in units of [kg*um/ms^2]
-    #     X = -fmax*np.array([r[:, 0]*1E-6*np.exp(-sigtrapinv*r[:, 0]*r[:, 0]*1E-12),r[:,1]*1E-6*np.exp(-sigtrapinv*r[:, 1]*r[:, 1]*1E-12)])
+    #     X = -fmax*np.array([r[:, 0]*1E-6*np.exp(-sigtrapinv*r[:, 0]*r[:, 0]*1E-12),
+    #     r[:,1]*1E-6*np.exp(-sigtrapinv*r[:, 1]*r[:, 1]*1E-12)])
+
     X = -fmax * np.multiply(np.exp(-sigtrapinv * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12), r.T * 1E-6)
     return X.T
 
 
 def evap_force(r, t):
-    if t <= equilibrationTime:
+    if t <= global_parameters['equilibrationtime']:
         return r * 0
     else:
-        f = -emax * (a - 2.0 * b * tleninv * r * 1E-6)
+        f = -emax * (global_parameters['a'] - 2.0 * global_parameters['b'] * tleninv * r * 1E-6)
         f[:, 1] = 0
 
-    if t < equilibrationTime + evaporationRamp:
-        return f * (t - equilibrationTime) / evaporationRamp
+    if t < global_parameters['equilibrationtime'] + global_parameters['evaporationramp']:
+        return f * (t - global_parameters['equilibrationtime']) / global_parameters['evaporationramp']
     else:
         return f
 
@@ -204,24 +209,29 @@ def write_params_file(params_file):
 
     f.write('########### Simulation Parameters ###########\n\n')
     f.write(
-        'T_MAX: {} ms\nTAU: {} ms\nWRITE_TIME: {} ms\nEQUILIBRATION: {} ms\nEVAP_RAMP: {} ms\nN: {}\n\n'.format(tmax,
-                                                                                                                tau,
-                                                                                                                writeEvery,
-                                                                                                                equilibrationTime,
-                                                                                                                evaporationRamp,
-                                                                                                                N))
-    f.write('BOUNDARY: {} um\nDIPOLE_CUTOFF: {} um\nCOLL_CUTOFF: {} nm\n\n'.format(bound, dipoleCutoff,
-                                                                                   collisionCutoff * 1E3))
+        'T_MAX: {} ms\nTAU: {} ms\nWRITE_TIME: {} ms\n'
+        'EQUILIBRATION: {} ms\nN: {}\n\n'.format(global_parameters['tmax'],
+                                                                   global_parameters['tau'],
+                                                                   global_parameters['writeevery'],
+                                                                   global_parameters['equilibrationtime'],
+                                                                   global_parameters['n']))
+
+    f.write('BOUNDARY: {} um\nCOLL_CUTOFF: {} nm\n\n'.format(global_parameters['bound'],
+                                                             global_parameters['collisioncutoff'] * 1E3))
 
     f.write('########### Particle Parameters ###########\n\n')
     f.write(
-        'MASS: {} AMU\nDIPOLE: {} D\nTEMP: {} nK\nINELASTIC_CS: {} um\nELASTIC_CS: {} um\n\n'.format(m / u, d / D2CM,
-                                                                                                     T0 * 1E9,
-                                                                                                     "na",
-                                                                                                     "na"))
+        'MASS: {} AMU\nTEMP: {} nK\nINELASTIC_COLL: {}\n\n'.format(global_parameters['m'] / u,
+                                                                      global_parameters['t'] * 1E9,
+                                                                      global_parameters['inelastic']))
 
     f.write('########### Trap Parameters ###########\n\n')
-    f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\n\n'.format(Ud / kB * 1E6, omega / (2.0 * np.pi), a, b))
+    f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\nEVAP_RAMP: {} ms\n\n'.format(
+                                                                 global_parameters['depth'] / kB * 1E6,
+                                                                 global_parameters['freq'] / (2.0 * np.pi),
+                                                                 global_parameters['a'],
+                                                                 global_parameters['b'],
+                                                                 global_parameters['evaporationramp'],))
 
     f.close()
 
@@ -229,5 +239,7 @@ def write_params_file(params_file):
 def trap_potential_for_plot(r):
     # Positions should be in Microns
     #     return -Ud*0.5*(np.exp(-sigtrapinv*r[0]*r[0]*1E-12)+np.exp(-sigtrapinv*r[1]*r[1]*1E-12))
-    return -Ud * np.exp(-sigtrapinv * (r[0] * r[0] + r[1] * r[1]) * 1E-12) + Ud * (
-            a * tleninv * r[0] - b * tleninv * tleninv * r[0] * r[0] * 1E-6) * 1E-6
+    return -global_parameters['depth']  * np.exp(-sigtrapinv * (r[0] * r[0] + r[1] * r[1]) * 1E-12) \
+           + global_parameters['depth']  * (
+            global_parameters['a'] * tleninv * r[0] - global_parameters['b']
+            * tleninv * tleninv * r[0] * r[0] * 1E-6) * 1E-6
