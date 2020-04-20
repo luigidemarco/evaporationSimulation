@@ -13,7 +13,7 @@ omega = 2 * np.pi * 35
 m = 127 * 1.6E-27
 
 filePath = './results/'
-files = ['NoEvaporation_20200416_01.out']
+files = ['NoEvaporation_20200417_00.out']
 excludeTime = 0.04
 
 for k in files:
