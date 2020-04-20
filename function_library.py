@@ -49,7 +49,58 @@ def parse_inputs(sysargv):
 
 
 def set_global_parameters(input_file):
-    pass
+    f = open(input_file)
+    global_parameter_keys = global_parameters.keys()
+    meta_data_keys = meta_data.keys()
+
+    for line in f:
+        if line.strip():
+
+            stripped_nl = line.replace('\n', "")
+            line_split = stripped_nl.split(':')
+
+            parameter = line_split[0].strip().lower()
+            value = line_split[1].strip()
+
+            try:
+                value = float(value)
+            except ValueError:
+                pass
+
+            if parameter not in global_parameter_keys + meta_data_keys:
+                raise AttributeError('Found undefined parameter \"{}\" in {}.'.format(parameter, input_file))
+
+            elif parameter in global_parameter_keys:
+                if parameter == 'freq':
+                    global_parameters[parameter] = 2.0*np.pi*value
+
+                elif parameter == 'depth':
+                    global_parameters[parameter] = value * kB * 1E-6
+
+                elif parameter == 't':
+                    global_parameters[parameter] = value * 1E-9
+
+                elif parameter == 'm':
+                    global_parameters[parameter] = value * u
+
+                elif parameter == 'inelastic':
+
+                    if isinstance(value, float):
+                        global_parameters[parameter] = bool(value)
+                    elif value.lower() in ('false', 'no', 'f'):
+                        global_parameters[parameter] = False
+                    elif value.lower() in ('true', 'yes', 't'):
+                        global_parameters[parameter] = True
+                    else:
+                        raise ValueError('Expected a boolean input for \"inelastic\" parameter,'
+                                         ' got {} instead.'.format(value))
+                else:
+                    global_parameters[parameter] = value
+
+            elif parameter in meta_data_keys:
+                meta_data[parameter] = value
+    f.close()
+    return 0
 
 
 def kinetic_energy(v):
@@ -201,9 +252,15 @@ def write_params_file(params_file):
     time_string = now.strftime("%H:%M:%S")
 
     f = open(params_file, 'w')
-    simulation_name = params_file.split('/')[-1].split('.')[0]
+    if meta_data['name']:
+        simulation_name = meta_data['name']
+    else:
+        simulation_name = params_file.split('/')[-1].split('.')[0]
 
     f.write('Simulation name: {}\n'.format(simulation_name))
+    if meta_data['comment']:
+        f.write('Comments: {}'.format(meta_data['comment']))
+
     f.write('Simulation started: {} at {}\n\n'.format(date_string, time_string))
     print('Simulation started: {} at {}\n\n'.format(date_string, time_string))
 
