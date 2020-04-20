@@ -36,6 +36,10 @@ global_parameters = {
     "evaporationramp": 20.0
 }
 
+meta_data = {"name": '',
+             "comment": '',
+}
+
 def reactive_cs(vrel):
     # Reactive cross-section based on linear fit to data
     # 0.2D and 23 kHz Trap (ArXiV 1311.0429)
