@@ -13,9 +13,9 @@ omega = 2 * np.pi * 35
 m = 127 * 1.6E-27
 
 filePath = './results/'
-files = ['NoEvaporation_20200417_00.out']
+files = ['GradEvaporation_20200420_03.out']
 
-excludeTime = 0.04
+excludeTime = 0.1
 
 for k in files:
     data = np.loadtxt(filePath + k)
@@ -75,6 +75,6 @@ for k in files:
 
         j += 1
 
-    fig0.suptitle(k)
+    fig0.suptitle(k + ", a = 0.4")
 
 plt.show()
