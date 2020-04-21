@@ -7,7 +7,6 @@ kB = 1.380649E-23
 u = 1.66053906660E-27
 D2CM = 3.33564E-30
 
-
 global_parameters = {
     #--------------------------------------- Simulation parameters """
     "tmax": 0.02,  # Time in ms
@@ -52,23 +51,15 @@ def elastic_cs(vrel):
     return -7.525E-6*vrel*vrel*vrel*vrel + 3.095E-4*vrel*vrel*vrel - 4.731E-3*vrel*vrel + 2.913E-2*vrel - 1.469E-3
 
 
-""" --------------------------------------- Derived parameters """
-
-sigtrapinv = global_parameters["m"] * global_parameters['freq'] * global_parameters['freq'] \
-             / (2. * global_parameters['depth'])
-
-fmax = global_parameters['m'] * global_parameters['freq'] * global_parameters['freq']
-
-tleninv = np.sqrt(fmax / global_parameters['depth'])
-
-emax = tleninv * global_parameters['depth']
-
-sigmaVelocity = np.sqrt(kB * global_parameters['t'] / global_parameters['m'])
-sigmaPosition = sigmaVelocity / global_parameters['freq']
-
-collisionProbabilityFactor = global_parameters['tau']/(np.pi*global_parameters['collisioncutoff']
-                                                       * global_parameters['collisioncutoff'])
-
-time = np.arange(0, global_parameters['tmax'] + global_parameters['tau'], global_parameters['tau'])
-nT = len(time)
-writeEveryInv = 1.0 / global_parameters['writeevery']
+derived_parameters = {
+    'sigtrapinv': 0,
+    'fmax': 0,
+    'tleninv': 0,
+    'emax': 0,
+    'sigmaVelocity': 0,
+    'sigmaPosition': 0,
+    'collisionProbabilityFactor': 0,
+    'time': 0,
+    'nT': 0,
+    'writeEveryInv': 0
+}

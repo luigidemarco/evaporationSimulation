@@ -83,6 +83,9 @@ def set_global_parameters(input_file):
                 elif parameter == 'm':
                     global_parameters[parameter] = value * u
 
+                elif parameter == 'n':
+                    global_parameters[parameter] = int(value)
+
                 elif parameter == 'inelastic':
 
                     if isinstance(value, float):
@@ -103,6 +106,27 @@ def set_global_parameters(input_file):
     return 0
 
 
+def calculate_derived_parameters():
+
+    derived_parameters['sigtrapinv'] = global_parameters["m"] * global_parameters['freq'] * global_parameters['freq'] \
+                 / (2. * global_parameters['depth'])
+
+    derived_parameters['fmax'] = global_parameters['m'] * global_parameters['freq'] * global_parameters['freq']
+
+    derived_parameters['tleninv'] = np.sqrt(derived_parameters['fmax'] / global_parameters['depth'])
+
+    derived_parameters['emax'] = derived_parameters['tleninv'] * global_parameters['depth']
+
+    derived_parameters['sigmaVelocity'] = np.sqrt(kB * global_parameters['t'] / global_parameters['m'])
+    derived_parameters['sigmaPosition'] = derived_parameters['sigmaVelocity'] / global_parameters['freq']
+
+    derived_parameters['collisionProbabilityFactor'] = global_parameters['tau'] / (np.pi * global_parameters['collisioncutoff']
+                                                             * global_parameters['collisioncutoff'])
+
+    derived_parameters['time'] = np.arange(0, global_parameters['tmax'] + global_parameters['tau'], global_parameters['tau'])
+    derived_parameters['nT'] = len(derived_parameters['time'])
+    derived_parameters['writeEveryInv'] = 1.0 / global_parameters['writeevery']
+
 def kinetic_energy(v):
     x = v * v * 1E-6
     return 0.5 * global_parameters['m'] * (x[:, 0] + x[:, 1])
@@ -114,7 +138,7 @@ def potential_energy(r):
     #        np.exp(-sigtrapinv * r[:, 0] * r[:, 0] * 1E-12) + np.exp(-sigtrapinv * r[:, 1] * r[:, 1] * 1E-12)) + Ud
 
     return global_parameters['depth'] - global_parameters['depth'] \
-           * np.exp(-sigtrapinv * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
+           * np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
 
 
 def trap_force(r):
@@ -124,7 +148,7 @@ def trap_force(r):
     #     X = -fmax*np.array([r[:, 0]*1E-6*np.exp(-sigtrapinv*r[:, 0]*r[:, 0]*1E-12),
     #     r[:,1]*1E-6*np.exp(-sigtrapinv*r[:, 1]*r[:, 1]*1E-12)])
 
-    X = -fmax * np.multiply(np.exp(-sigtrapinv * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12), r.T * 1E-6)
+    X = -derived_parameters['fmax'] * np.multiply(np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12), r.T * 1E-6)
     return X.T
 
 
@@ -132,7 +156,8 @@ def evap_force(r, t):
     if t <= global_parameters['equilibrationtime']:
         return r * 0
     else:
-        f = -emax * (global_parameters['a'] - 2.0 * global_parameters['b'] * tleninv * r * 1E-6)
+        f = -derived_parameters['emax'] * (global_parameters['a'] -
+                                           2.0 * global_parameters['b'] * derived_parameters['tleninv'] * r * 1E-6)
         f[:, 1] = 0
 
     if t < global_parameters['equilibrationtime'] + global_parameters['evaporationramp']:
@@ -143,12 +168,12 @@ def evap_force(r, t):
 
 def initialize_velocities(N):
     # Returns N initial velocities in [um/ms]
-    return np.random.normal(0, sigmaVelocity, (N, 2)) * 1E3
+    return np.random.normal(0, derived_parameters['sigmaVelocity'], (N, 2)) * 1E3
 
 
 def initialize_positions(N):
     # Returns N initial positions in [um]
-    return np.random.normal(0, sigmaPosition, (N, 2)) * 1E6
+    return np.random.normal(0, derived_parameters['sigmaPosition'], (N, 2)) * 1E6
 
 
 def collision_check(r, colcut=0.1):
@@ -211,7 +236,7 @@ def collision_montecarlo(colList, V):
         inelasticProbability = reactiveCrossSection / (reactiveCrossSection + elasticCrossSection)
 
         # print(VRel * collisionProbabilityFactor * totalCrossSection)
-        if VRel * collisionProbabilityFactor * totalCrossSection > P[j]:
+        if VRel * derived_parameters['collisionProbabilityFactor'] * totalCrossSection > P[j]:
 
             if pEvI[j] > inelasticProbability:
                 # Elastic collisions
@@ -259,7 +284,7 @@ def write_params_file(params_file):
 
     f.write('Simulation name: {}\n'.format(simulation_name))
     if meta_data['comment']:
-        f.write('Comments: {}'.format(meta_data['comment']))
+        f.write('Comments: {}\n'.format(meta_data['comment']))
 
     f.write('Simulation started: {} at {}\n\n'.format(date_string, time_string))
     print('Simulation started: {} at {}\n\n'.format(date_string, time_string))
@@ -296,7 +321,7 @@ def write_params_file(params_file):
 def trap_potential_for_plot(r):
     # Positions should be in Microns
     #     return -Ud*0.5*(np.exp(-sigtrapinv*r[0]*r[0]*1E-12)+np.exp(-sigtrapinv*r[1]*r[1]*1E-12))
-    return -global_parameters['depth']  * np.exp(-sigtrapinv * (r[0] * r[0] + r[1] * r[1]) * 1E-12) \
+    return -global_parameters['depth']  * np.exp(-derived_parameters['sigtrapinv'] * (r[0] * r[0] + r[1] * r[1]) * 1E-12) \
            + global_parameters['depth']  * (
-            global_parameters['a'] * tleninv * r[0] - global_parameters['b']
-            * tleninv * tleninv * r[0] * r[0] * 1E-6) * 1E-6
+            global_parameters['a'] * derived_parameters['tleninv'] * r[0] - global_parameters['b']
+            * derived_parameters['tleninv'] * derived_parameters['tleninv'] * r[0] * r[0] * 1E-6) * 1E-6
