@@ -254,7 +254,8 @@ def collision_montecarlo(colList, V):
 
             else:
                 # Reactive collisions
-                reactiveSuccess.append(k)
+                if global_parameters['Inelastic']:
+                    reactiveSuccess.append(k)
         else:
             pass
 
