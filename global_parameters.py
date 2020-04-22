@@ -9,7 +9,7 @@ D2CM = 3.33564E-30
 
 global_parameters = {
     #--------------------------------------- Simulation parameters """
-    "tmax": 0.02,  # Time in ms
+    "tmax": 10,  # Time in ms
     "tau": 0.002,  # Time step in ms
     "equilibrationtime": 0.0,
     "writeevery": 0.1,  # Timestep to write the data in ms
@@ -30,8 +30,8 @@ global_parameters = {
     
     
     # --------------------------------------- Evaporation parameters
-    "a": 0.1 * 0,
-    "b": 0.1 * 0,
+    "a": 0.0,
+    "b": 0.0,
     "evaporationramp": 20.0
 }
 
