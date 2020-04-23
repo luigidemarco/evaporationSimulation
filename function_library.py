@@ -253,7 +253,6 @@ def collision_montecarlo(colList, V):
 
         elasticCrossSection = cross_sections['elastic'](VRel)
         reactiveCrossSection = cross_sections['reactive'](VRel)
-        print(elasticCrossSection, reactiveCrossSection)
 
         totalCrossSection = reactiveCrossSection + elasticCrossSection
         inelasticProbability = reactiveCrossSection / (reactiveCrossSection + elasticCrossSection)
