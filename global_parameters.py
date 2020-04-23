@@ -8,14 +8,14 @@ u = 1.66053906660E-27
 D2CM = 3.33564E-30
 
 global_parameters = {
-    #--------------------------------------- Simulation parameters """
+    # --------------------------------------- Simulation parameters """
     "tmax": 10,  # Time in ms
     "tau": 0.002,  # Time step in ms
     "equilibrationtime": 0.0,
     "writeevery": 0.1,  # Timestep to write the data in ms
 
     "n": 20,
-    
+
     "bound": 150,
     "collisioncutoff": 0.05,
 
@@ -24,11 +24,13 @@ global_parameters = {
     "t": 300E-9,  # Initial temperature
     "inelastic": True,  # Set false to turn off inelastic collisions
 
+    "elasticcoeff": [-7.525E-6, 3.095E-4, - 4.731E-3, 2.913E-2, - 1.469E-3],
+    "reactivecoeff": [5.763E-5, - 7.05277E-5],
+
     # --------------------------------------- Trap parameters
     "depth": 2.5 * 1E-6 * kB,  # Trap depth in J
     "freq": 2 * np.pi * 35,
-    
-    
+
     # --------------------------------------- Evaporation parameters
     "a": 0.0,
     "b": 0.0,
@@ -37,19 +39,11 @@ global_parameters = {
 
 meta_data = {"name": '',
              "comment": '',
-}
+             }
 
-def reactive_cs(vrel):
-    # Reactive cross-section based on linear fit to data
-    # 0.2D and 23 kHz Trap (ArXiV 1311.0429)
-    return 5.763E-5*vrel - 7.05277E-5
-
-
-def elastic_cs(vrel):
-    # Reactive cross-section based on quartic fit to data
-    # 0.2D and 23 kHz Trap (ArXiV 1311.0429)
-    return -7.525E-6*vrel*vrel*vrel*vrel + 3.095E-4*vrel*vrel*vrel - 4.731E-3*vrel*vrel + 2.913E-2*vrel - 1.469E-3
-
+cross_sections = {"elastic": [],
+                  "reactive": []
+                  }
 
 derived_parameters = {
     'sigtrapinv': 0,
