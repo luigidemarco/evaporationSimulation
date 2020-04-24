@@ -1,6 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
+import sys
+
+argv = sys.argv[1:]
 
 
 def two_body(p, t, y):
@@ -8,17 +11,21 @@ def two_body(p, t, y):
 
 
 kB = 1.38E-23
-
 omega = 2 * np.pi * 35
 m = 127 * 1.6E-27
 
-filePath = './results/'
-files = ['GradEvaporation_20200421_00.out']
+
+files = argv
+
+figures = [0]*len(files)
 
 excludeTime = 0.1
 
+n = 0
 for k in files:
-    data = np.loadtxt(filePath + k)
+    print("File: " + k)
+    data = np.loadtxt(k)
+
     time = data[:, 0] / 1000.
     kinetic = data[:, 1] / kB * 1E9
     potential = data[:, 2] / kB * 1E9
@@ -30,19 +37,22 @@ for k in files:
 
     p_linear_temperature = np.polyfit(time[time > excludeTime], kinetic[time > excludeTime], 1)
     p_psd = np.polyfit(np.log(temperature[time > excludeTime]), np.log(number[time > excludeTime]), 1)
+    print('T0 = {:.1f} nK,  h = {:.1f} nK/s'.format(p_linear_temperature[1], p_linear_temperature[0]))
 
     p0 = [4E7, 1E-7]
     pUpper = [np.inf, 1.0]
     pLower = [0, 0.0]
     resLSQ = least_squares(two_body, p0, args=(time, density), bounds=(pLower, pUpper))
     n0, beta = resLSQ.x
+    print('n0 = {0:.2f}E7 cm^-2,  beta = {1:.2f}E7 cm^2 s^-1$'.format(n0 / 1E7, beta * 1E7))
+    print('Slope: {:.2f}\n'.format(p_psd[0]))
 
-    fig0 = plt.figure(figsize=(10, 8))
+    figures[n] = plt.figure(figsize=(7.5, 6))
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    ax0 = fig0.add_subplot(221)
-    ax1 = fig0.add_subplot(222)
-    ax2 = fig0.add_subplot(223)
-    ax3 = fig0.add_subplot(224)
+    ax0 = figures[n].add_subplot(221)
+    ax1 = figures[n].add_subplot(222)
+    ax2 = figures[n].add_subplot(223)
+    ax3 = figures[n].add_subplot(224)
 
     all_axes = [ax0, ax1, ax2, ax3]
     all_ylabels = ['Number', 'Temperature (nK)', r'Density (10$^7$ cm$^{-2}$)', 'log(N)']
@@ -75,6 +85,7 @@ for k in files:
 
         j += 1
 
-    fig0.suptitle(k + ", a = 0.5")
+    figures[n].suptitle(k)
+    n += 1
 
 plt.show()
