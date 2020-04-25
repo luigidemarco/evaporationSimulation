@@ -97,6 +97,17 @@ def set_global_parameters(input_file):
                     else:
                         raise ValueError('Expected a boolean input for \"inelastic\" parameter,'
                                          ' got {} instead.'.format(value))
+
+                elif parameter == 'elasticcoeff' or parameter == 'reactivecoeff':
+
+                    if type(value) == float:
+                        global_parameters[parameter] = [value]
+                    else:
+                        value = value.replace(" ", "")
+                        value = value.split(",")
+                        value = map(float, value)
+                        global_parameters[parameter] = value
+
                 else:
                     global_parameters[parameter] = value
 
@@ -176,6 +187,17 @@ def initialize_positions(N):
     return np.random.normal(0, derived_parameters['sigmaPosition'], (N, 2)) * 1E6
 
 
+def make_cross_section(coefficients):
+    # Given a list of coefficients [a1, a2, a3, ..., aN] returns a function
+    # that is the polynomial a1*x**N + a2*x**(N-1) + ... + aN
+    def polynomial(v):
+        result = 0
+        for c in coefficients:
+            result = result * v + c
+        return result
+    return polynomial
+
+
 def collision_check(r, colcut=0.1):
     # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
 
@@ -229,8 +251,8 @@ def collision_montecarlo(colList, V):
 
         VRel = np.sqrt(dVx * dVx + dVy * dVy)
 
-        elasticCrossSection = elastic_cs(VRel)
-        reactiveCrossSection = reactive_cs(VRel)
+        elasticCrossSection = cross_sections['elastic'](VRel)
+        reactiveCrossSection = cross_sections['reactive'](VRel)
 
         totalCrossSection = reactiveCrossSection + elasticCrossSection
         inelasticProbability = reactiveCrossSection / (reactiveCrossSection + elasticCrossSection)
@@ -307,6 +329,8 @@ def write_params_file(params_file):
         'MASS: {} AMU\nTEMP: {} nK\nINELASTIC_COLL: {}\n\n'.format(global_parameters['m'] / u,
                                                                       global_parameters['t'] * 1E9,
                                                                       global_parameters['inelastic']))
+    f.write('ELASTICCOEFF: {}\nREACTIVECOEFF: {}\n\n'.format(global_parameters['elasticcoeff'],
+                                                             global_parameters['reactivecoeff']))
 
     f.write('########### Trap Parameters ###########\n\n')
     f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\nEVAP_RAMP: {} ms\n\n'.format(

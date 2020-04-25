@@ -7,6 +7,11 @@ input_file, output_file, params_file = parse_inputs(argv)
 set_global_parameters(input_file)
 calculate_derived_parameters()
 
+""" ------- Generate Cross Sections ------- """
+
+cross_sections['elastic'] = make_cross_section(global_parameters['elasticcoeff'])
+cross_sections['reactive'] = make_cross_section(global_parameters['reactivecoeff'])
+
 
 """ ------- Initialize Simulation ------- """
 
