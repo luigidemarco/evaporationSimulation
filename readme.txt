@@ -8,20 +8,22 @@ Trap dynamics are treated through Verlet integration of the equations of motion.
 
 
 
-
 To run:
 
     python main.py --input file.in --output output.out
 
 The output file is a text file with columns:
 
-    time [ms]       mean kinetic energy [J]     mean potential energy [J]       number
+    time [ms]       mean kinetic energy [J]     mean potential energy [J]       number       Elastic Collisions
+
+However, if the "Nonequilibrium" parameter is specified, the kinetic energy for both the x and y axes are both contained
+in the output file.
+
 
 A parameters file is also generated that summarizes the input parameters and reports the runtime of the simulation.
 
 **NOTE: Running 2000 particles with no inelastic loss for 1s takes ~18 hours on a decent computer
         Runtime scales roughly quadratically with N and linearly with number of time steps
-
 
 
 
@@ -54,6 +56,7 @@ T                       Starting temperature [nK]                           300
 Inelastic               Whether inelastic collisions occur                  True
 ElasticCoeff            Elastic cross section polynomial coefficients       KRb @ 0.2 D
 ReactiveCoeff           Reactive cross section polynomial coefficients      KRb @ 0.2 D
+Nonequilibrium          Initial Temperature Scaling for X-Axis              0.0
 
 Bound                   Boundary at which particles are removed [um]        150
 CollisionCutOff         Cutoff at which a collision can occur [um]          0.05
