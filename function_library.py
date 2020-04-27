@@ -140,7 +140,10 @@ def calculate_derived_parameters():
 
 def kinetic_energy(v):
     x = v * v * 1E-6
-    return 0.5 * global_parameters['m'] * (x[:, 0] + x[:, 1])
+    if global_parameters['nonequilibrium']:
+        return 0.5 * global_parameters['m'] * x
+    else:
+        return 0.5 * global_parameters['m'] * (x[:, 0] + x[:, 1])
 
 
 def potential_energy(r):
@@ -315,11 +318,12 @@ def write_params_file(params_file):
     f.write('########### Simulation Parameters ###########\n\n')
     f.write(
         'T_MAX: {} ms\nTAU: {} ms\nWRITE_TIME: {} ms\n'
-        'EQUILIBRATION: {} ms\nN: {}\n\n'.format(global_parameters['tmax'],
+        'EQUILIBRATION: {} ms\nN: {}\nNONEQUIL: {}\n\n'.format(global_parameters['tmax'],
                                                                    global_parameters['tau'],
                                                                    global_parameters['writeevery'],
                                                                    global_parameters['equilibrationtime'],
-                                                                   global_parameters['n']))
+                                                                   global_parameters['n'],
+                                                                   global_parameters['nonequilibrium']))
 
     f.write('BOUNDARY: {} um\nCOLL_CUTOFF: {} nm\n\n'.format(global_parameters['bound'],
                                                              global_parameters['collisioncutoff'] * 1E3))

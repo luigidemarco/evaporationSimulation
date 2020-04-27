@@ -22,6 +22,9 @@ resFile = open(output_file, 'w')
 R0 = initialize_positions(global_parameters['n'])
 V0 = initialize_velocities(global_parameters['n'])
 
+if global_parameters['nonequilibrium']:
+    V0[:, 0] = V0[:, 0] * np.sqrt(global_parameters['nonequilibrium'])
+
 # R0 = np.array([[10,0.00],[-10,-0.00]])
 # V0 = np.array([[-15,0],[15,0]])
 
@@ -39,11 +42,16 @@ V0 = np.delete(V0, particlesRemoval, 0)
 start = clock.time()
 F0 = trap_force(R0) + evap_force(R0, 0.0)
 
-T = np.mean(kinetic_energy(V0))
+T = np.mean(kinetic_energy(V0), 0)
 U = np.mean(potential_energy(R0))
 pN = R0.shape[0]
+cN = 0
 
-resFile.write('{}\t{:.4e}\t{:.4e}\t{:0.0f}'.format(derived_parameters['time'][0], T, U, pN))
+if global_parameters['nonequilibrium']:
+    resFile.write('{}\t{:.4e}\t{:.4e}\t{:.4e}\t{:0.0f}\t{}'.format(derived_parameters['time'][0],
+                                                                   T[0], T[1], U, pN, cN))
+else:
+    resFile.write('{}\t{:.4e}\t{:.4e}\t{:0.0f}\t{}'.format(derived_parameters['time'][0], T, U, pN, cN))
 
 # trajectory = np.zeros((nT, N, 2))
 # trajectory[0, :, :] = R0
@@ -61,6 +69,7 @@ for k in range(1, derived_parameters['nT']):
     particlesOOB = particles_out_of_bounds(R, global_parameters['bound'])
 
     V0, elasticPairs, inelasticPairs = collision_montecarlo(particlesCollision, V0)
+    cN += len(elasticPairs)
 
     # Removal of particles
 
@@ -82,10 +91,15 @@ for k in range(1, derived_parameters['nT']):
 
     if derived_parameters['time'][k] * derived_parameters['writeEveryInv'] % 1 == 0:
 
-        T = np.mean(kinetic_energy(V))
+        T = np.mean(kinetic_energy(V), 0)
         U = np.mean(potential_energy(R))
         pN = R.shape[0]
-        resFile.write('\n{}\t{:.4e}\t{:.4e}\t{:0.0f}'.format(derived_parameters['time'][k], T, U, pN))
+
+        if global_parameters['nonequilibrium']:
+            resFile.write('\n{}\t{:.4e}\t{:.4e}\t{:.4e}\t{:0.0f}\t{}'.format(derived_parameters['time'][k],
+                                                                             T[0], T[1], U, pN, cN))
+        else:
+            resFile.write('\n{}\t{:.4e}\t{:.4e}\t{:0.0f}\t{}'.format(derived_parameters['time'][k], T, U, pN, cN))
 
     # Reinitialize the variables
     R0 = R

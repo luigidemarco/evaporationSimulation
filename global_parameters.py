@@ -19,6 +19,8 @@ global_parameters = {
     "bound": 150,
     "collisioncutoff": 0.05,
 
+    "nonequilibrium": 0.0,
+
     # --------------------------------------- Particle parameters
     "m": 127 * u,  # Mass in kg
     "t": 300E-9,  # Initial temperature
