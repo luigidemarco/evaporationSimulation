@@ -206,35 +206,39 @@ def collision_check(r, colcut=0.1):
 
     N = r.shape[0]
 
-    ####Calculate all interparticle distances
-    x1, x2 = np.meshgrid(r[:, 0], r[:, 0])
-    dx = x2 - x1
+    # Sort r based on the x-coordinate
+    # see https://stackoverflow.com/a/30623882
+    s = np.lexsort(np.fliplr(r).T)
+    xx = r[s]
 
-    tx = np.argwhere((np.abs(dx) < colcut) * np.triu(np.ones((N, N)), 1))
-
+    # Collect particles closer than colcut in x or in y
     squareColIndex = []
-    collIndex = []
     coords = []
+    for i, a in enumerate(xx):
+        for j, b in enumerate(xx[(i+1):-1]):
+            dr = b - a
+            if np.abs(dr)[0] < colcut:
+                if np.abs(dr)[1] < colcut:
+                    i1 = s[i]
+                    i2 = s[i+1+j]
+                    squareColIndex.append([min(i1, i2), max(i1, i2)])
+                    coords.append(dr)
+            else:
+                break
 
-    for k in tx:
-        dy = r[k[0], 1] - r[k[1], 1]
-        if abs(dy) < colcut:
-            squareColIndex.append(k)
-            coords.append([dx[k[0], k[1]], dy])
-
-    nSqCol = len(squareColIndex)
-    if nSqCol == 0:
+    if not squareColIndex:
         return []
-    else:
-        pass
 
+    squareColIndex = np.array(squareColIndex)
     coords = np.array(coords)
-    rij2 = coords[:, 0] * coords[:, 0] + coords[:, 1] * coords[:, 1]
 
-    #### Calculate the dipole-dipole forces for particles separated by less than dipcut
-    for k in range(nSqCol):
-        if rij2[k] < colcut * colcut:
-            collIndex.append(squareColIndex[k])
+
+    collIndex = []
+    rij2 = np.sum(np.square(coords), axis=-1)
+
+    for r, sci in zip(rij2, squareColIndex):
+        if r < colcut * colcut:
+            collIndex.append(sci)
 
     return np.array(collIndex)
 
