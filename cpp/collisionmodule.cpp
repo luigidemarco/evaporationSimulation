@@ -16,7 +16,7 @@ typedef struct pair_coords_t {
 
 static std::vector<pair_coords_t>
 find_pairs(std::vector<coords_t> r, double colcut) {
-	int l = r.size();
+	int l = (int) r.size();
 	std::vector<pair_coords_t> out;
 
 	for (int i=0; i<l; i++) {
@@ -48,7 +48,7 @@ collision_find_pairs(PyObject* self, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "Od", &input, &colcut))
 		return NULL;
 
-	int size = PyList_Size(input);
+	int size = (int) PyList_Size(input);
 	std::vector<coords_t> r;
 	r.resize(size);
 
@@ -59,7 +59,7 @@ collision_find_pairs(PyObject* self, PyObject* args) {
 	}
 
 	std::vector<pair_coords_t> out = find_pairs(r, colcut);
-	int l = out.size();
+	int l = (int) out.size();
 
 	PyObject* out_pairs = PyList_New(l);
 	PyObject* out_coords = PyList_New(l);

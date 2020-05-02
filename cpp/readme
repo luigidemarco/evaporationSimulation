@@ -1,0 +1,11 @@
+C++ extension to speed up collision_check() in function_library.py.
+
+Linux:
+    - Run "python setup_linux.py build"
+    - Run "python setup_linux.py install"
+Windows:
+    - Install "Microsoft Visual C++ Compiler for Python 2.7"
+    - Run "python setup_win.py build"
+    - Run "python setup_win.py install"
+
+Now, should be able to do "import collision" in Python.
