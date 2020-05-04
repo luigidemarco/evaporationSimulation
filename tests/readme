@@ -1,0 +1,11 @@
+Speed and correctness tests for the revamped collision_check function.
+
+collision_check_compiled.py:
+   - Compares the normal version of the function with the C++ extension
+   - ../cpp/krbcollision.cpp defines the C++ extension for finding the collision pairs.
+   - The extension should be built and installed (try "import krbcollision" in iPython).
+
+collision_check_jit.py:
+    - Compares the normmal version of the function with a faster version using
+      Numba's just-in-time compilation
+    - Needs Numba installed and Python 3

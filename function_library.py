@@ -200,48 +200,80 @@ def make_cross_section(coefficients):
         return result
     return polynomial
 
+def collision_check_py(r, colcut=0.1):
+        # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
+        N = r.shape[0]
 
-def collision_check(r, colcut=0.1):
-    # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
+        # Sort r based on the x-coordinate
+        # see https://stackoverflow.com/a/30623882
+        s = np.lexsort(np.fliplr(r).T)
+        xx = r[s]
 
-    N = r.shape[0]
+        # Collect particles closer than colcut in x or in y
+        squareColIndex = []
+        coords = []
+        for i, a in enumerate(xx):
+            for j, b in enumerate(xx[(i+1):-1]):
+                dx = abs(b[0] - a[0])
+                if dx < colcut:
+                    dy = abs(b[1] - a[1])
+                    if dy < colcut:
+                        i1 = s[i]
+                        i2 = s[i+1+j]
+                        squareColIndex.append([min(i1, i2), max(i1, i2)])
+                        coords.append([dx, dy])
+                else:
+                    break
 
-    # Sort r based on the x-coordinate
-    # see https://stackoverflow.com/a/30623882
-    s = np.lexsort(np.fliplr(r).T)
-    xx = r[s]
+        if not squareColIndex:
+            return []
 
-    # Collect particles closer than colcut in x or in y
-    squareColIndex = []
-    coords = []
-    for i, a in enumerate(xx):
-        for j, b in enumerate(xx[(i+1):-1]):
-            dr = b - a
-            if np.abs(dr)[0] < colcut:
-                if np.abs(dr)[1] < colcut:
-                    i1 = s[i]
-                    i2 = s[i+1+j]
-                    squareColIndex.append([min(i1, i2), max(i1, i2)])
-                    coords.append(dr)
-            else:
-                break
+        squareColIndex = np.array(squareColIndex)
+        coords = np.array(coords)
 
-    if not squareColIndex:
-        return []
+        collIndex = []
+        rij2 = np.sum(np.square(coords), axis=-1)
 
-    squareColIndex = np.array(squareColIndex)
-    coords = np.array(coords)
+        for r, sci in zip(rij2, squareColIndex):
+            if r < colcut * colcut:
+                collIndex.append(sci)
 
+        return np.array(collIndex)
 
-    collIndex = []
-    rij2 = np.sum(np.square(coords), axis=-1)
+try:
+    import krbcollision
 
-    for r, sci in zip(rij2, squareColIndex):
-        if r < colcut * colcut:
-            collIndex.append(sci)
+    def collision_check(r, colcut=0.1):
+        # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
 
-    return np.array(collIndex)
+        # Sort r based on the x-coordinate
+        # see https://stackoverflow.com/a/30623882
+        s = np.lexsort(np.fliplr(r).T)
+        xx = r[s]
 
+        [squareColIndex, coords] = krbcollision.find_pairs(xx.tolist(), colcut)
+        squareColIndex = [[min(s[sci[0]], s[sci[1]]), max(s[sci[0]], s[sci[1]])] for sci in squareColIndex]
+
+        if not squareColIndex:
+            return []
+
+        squareColIndex = np.array(squareColIndex)
+        coords = np.array(coords)
+
+        collIndex = []
+        rij2 = np.sum(np.square(coords), axis=-1)
+
+        for r, sci in zip(rij2, squareColIndex):
+            if r < colcut * colcut:
+                collIndex.append(sci)
+
+        return np.array(collIndex)
+
+    print("krbcollision module successfully imported; using compiled version of collision_check.")
+
+except:
+    collision_check = collision_check_py
+    print("krbcollision module not imported; using pure Python implementation (slow!).")
 
 def collision_montecarlo(colList, V):
     n = len(colList)
