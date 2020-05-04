@@ -10,7 +10,7 @@ In the python file, import collision
 
 from distutils.core import setup, Extension
 
-module1 = Extension('krbcollision', sources=['krbcollision.cpp'])
+module1 = Extension('krbcollision', sources=['cpp/krbcollision.cpp'])
 
 setup(name = 'KRbCollisionModule',
 	version = '1.0',

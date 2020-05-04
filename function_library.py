@@ -200,39 +200,7 @@ def make_cross_section(coefficients):
         return result
     return polynomial
 
-try:
-    import krbcollision
-
-    def collision_check(r, colcut=0.1):
-        # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
-
-        # Sort r based on the x-coordinate
-        # see https://stackoverflow.com/a/30623882
-        s = np.lexsort(np.fliplr(r).T)
-        xx = r[s]
-
-        [squareColIndex, coords] = krbcollision.find_pairs(xx.tolist(), colcut)
-        squareColIndex = [[min(s[sci[0]], s[sci[1]]), max(s[sci[0]], s[sci[1]])] for sci in squareColIndex]
-
-        if not squareColIndex:
-            return []
-
-        squareColIndex = np.array(squareColIndex)
-        coords = np.array(coords)
-
-        collIndex = []
-        rij2 = np.sum(np.square(coords), axis=-1)
-
-        for r, sci in zip(rij2, squareColIndex):
-            if r < colcut * colcut:
-                collIndex.append(sci)
-
-        return np.array(collIndex)
-
-    print("krbcollision module successfully imported.")
-
-except:
-    def collision_check(r, colcut=0.1):
+def collision_check_py(r, colcut=0.1):
         # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
         N = r.shape[0]
 
@@ -263,6 +231,34 @@ except:
         squareColIndex = np.array(squareColIndex)
         coords = np.array(coords)
 
+        collIndex = []
+        rij2 = np.sum(np.square(coords), axis=-1)
+
+        for r, sci in zip(rij2, squareColIndex):
+            if r < colcut * colcut:
+                collIndex.append(sci)
+
+        return np.array(collIndex)
+
+try:
+    import krbcollision
+
+    def collision_check(r, colcut=0.1):
+        # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
+
+        # Sort r based on the x-coordinate
+        # see https://stackoverflow.com/a/30623882
+        s = np.lexsort(np.fliplr(r).T)
+        xx = r[s]
+
+        [squareColIndex, coords] = krbcollision.find_pairs(xx.tolist(), colcut)
+        squareColIndex = [[min(s[sci[0]], s[sci[1]]), max(s[sci[0]], s[sci[1]])] for sci in squareColIndex]
+
+        if not squareColIndex:
+            return []
+
+        squareColIndex = np.array(squareColIndex)
+        coords = np.array(coords)
 
         collIndex = []
         rij2 = np.sum(np.square(coords), axis=-1)
@@ -272,7 +268,11 @@ except:
                 collIndex.append(sci)
 
         return np.array(collIndex)
-    
+
+    print("krbcollision module successfully imported; using compiled version of collision_check.")
+
+except:
+    collision_check = collision_check_py
     print("krbcollision module not imported; using pure Python implementation (slow!).")
 
 def collision_montecarlo(colList, V):

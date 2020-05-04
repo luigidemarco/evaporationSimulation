@@ -3,7 +3,7 @@ import time
 
 import sys
 sys.path.append('..')
-from function_library import collision_check
+from function_library import collision_check_py as collision_check
 
 import krbcollision
 
