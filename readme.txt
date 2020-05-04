@@ -1,12 +1,23 @@
 2D Evaporation Simulation
+
+Written by:
 Luigi De Marco
+Kyle Matsuda
+
 ############################################################################################
 
 Simulate the evaporation of particles in a two dimensional Gaussian trap.
 Both elastic and inelastic collisions are treated using Monte Carlo.
 Trap dynamics are treated through Verlet integration of the equations of motion.
 
+Simulations are greatly sped up via a C++ extension to deal with collisions:
+    C++ extension to speed up collision_check() in function_library.py.
+    To build and install extension: "python setup.py"
+    Need setuptools and distutils installed.
+    For Windows, need Microsoft Visual C++ Compiler for Python 2.7.
+    After installing, should be able to "import krbcollision" in Python.
 
+############################################################################################
 
 To run:
 
@@ -19,13 +30,9 @@ The output file is a text file with columns:
 However, if the "Nonequilibrium" parameter is specified, the kinetic energy for both the x and y axes are both contained
 in the output file.
 
-
 A parameters file is also generated that summarizes the input parameters and reports the runtime of the simulation.
 
-**NOTE: Running 2000 particles with no inelastic loss for 1s takes ~18 hours on a decent computer
-        Runtime scales roughly quadratically with N and linearly with number of time steps
-
-
+############################################################################################
 
 The input file should be a text file with lines of the form
 

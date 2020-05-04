@@ -1,9 +1,0 @@
-C++ extension to speed up collision_check() in function_library.py.
-
-To build and install extension: "python setup.py"
-
-Need setuptools and distutils installed.
-
-For Windows, need Microsoft Visual C++ Compiler for Python 2.7.
-
-After installing, should be able to "import krbcollision" in Python.
