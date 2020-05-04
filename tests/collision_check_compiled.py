@@ -5,7 +5,7 @@ import sys
 sys.path.append('..')
 from function_library import collision_check
 
-import collision
+import krbcollision
 
 def collision_check_compiled(r, colcut=0.1):
     # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
@@ -15,7 +15,7 @@ def collision_check_compiled(r, colcut=0.1):
     s = np.lexsort(np.fliplr(r).T)
     xx = r[s]
 
-    [squareColIndex, coords] = collision.find_pairs(xx.tolist(), colcut)
+    [squareColIndex, coords] = krbcollision.find_pairs(xx.tolist(), colcut)
     squareColIndex = [[min(s[sci[0]], s[sci[1]]), max(s[sci[0]], s[sci[1]])] for sci in squareColIndex]
 
     if not squareColIndex:

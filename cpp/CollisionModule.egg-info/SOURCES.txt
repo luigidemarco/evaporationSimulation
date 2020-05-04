@@ -1,7 +1,0 @@
-collisionmodule.cpp
-setup.py
-setup_win.py
-CollisionModule.egg-info/PKG-INFO
-CollisionModule.egg-info/SOURCES.txt
-CollisionModule.egg-info/dependency_links.txt
-CollisionModule.egg-info/top_level.txt

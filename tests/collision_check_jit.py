@@ -2,9 +2,47 @@ import numpy as np
 from numba import jit
 import time
 
-import sys
-sys.path.append('..')
-from function_library import collision_check
+def collision_check(r, colcut=0.1):
+    # Takes a N x 2 matrix of positions, and returns elastic and inelastic loss candidates [List of pairs]
+
+    N = r.shape[0]
+
+    # Sort r based on the x-coordinate
+    # see https://stackoverflow.com/a/30623882
+    s = np.lexsort(np.fliplr(r).T)
+    xx = r[s]
+
+    # Collect particles closer than colcut in x or in y
+    squareColIndex = []
+    coords = []
+    for i, a in enumerate(xx):
+        for j, b in enumerate(xx[(i+1):-1]):
+            dx = abs(b[0] - a[0])
+            if dx < colcut:
+                dy = abs(b[1] - a[1])
+                if dy < colcut:
+                    i1 = s[i]
+                    i2 = s[i+1+j]
+                    squareColIndex.append([min(i1, i2), max(i1, i2)])
+                    coords.append([dx, dy])
+            else:
+                break
+
+    if not squareColIndex:
+        return []
+
+    squareColIndex = np.array(squareColIndex)
+    coords = np.array(coords)
+
+
+    collIndex = []
+    rij2 = np.sum(np.square(coords), axis=-1)
+
+    for r, sci in zip(rij2, squareColIndex):
+        if r < colcut * colcut:
+            collIndex.append(sci)
+
+    return np.array(collIndex)
 
 # Comment @jit to disable compilation
 @jit(nopython=True)

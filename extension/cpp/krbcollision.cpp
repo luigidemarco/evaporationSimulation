@@ -41,7 +41,7 @@ find_pairs(std::vector<coords_t> r, double colcut) {
 }
 
 static PyObject*
-collision_find_pairs(PyObject* self, PyObject* args) {
+krbcollision_find_pairs(PyObject* self, PyObject* args) {
 	PyObject* input;
 	double colcut;
 
@@ -81,12 +81,12 @@ collision_find_pairs(PyObject* self, PyObject* args) {
 }
 
 static PyMethodDef CollisionMethods[] = {
-	{"find_pairs", collision_find_pairs, METH_VARARGS,
+	{"find_pairs", krbcollision_find_pairs, METH_VARARGS,
 	"Find collision pair candidates."},
 	{NULL, NULL, 0, NULL}
 };
 
 PyMODINIT_FUNC
-initcollision(void) {
-	(void) Py_InitModule("collision", CollisionMethods);
+initkrbcollision(void) {
+	(void) Py_InitModule("krbcollision", CollisionMethods);
 }
