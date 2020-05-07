@@ -76,6 +76,7 @@ for k in files:
     resLSQY = least_squares(exp, p0, args=(time[time > excludeTime], kineticY[time > excludeTime]), bounds=(pLower, pUpper))
     T0X, tauX, TfX = resLSQX.x
     T0Y, tauY, TfY = resLSQY.x
+    col2therm = np.interp(np.mean([tauX, tauY]), time, collisions/N)
 
     print('TauX = {0:.2f} s, TauY = {1:.2f} s'.format(tauX, tauY))
 
@@ -83,7 +84,8 @@ for k in files:
     Xfit = exp([T0X, tauX, TfX], time, 0)
     Yfit = exp([T0Y, tauY, TfY], time, 0)
 
-    print("Total number of collisions: {}\n".format(int(total_collisions)))
+    print("Total number of collisions: {}".format(int(total_collisions)))
+    print("Number of collisions to thermalize: {:.1f}\n".format(col2therm))
 
     figures[n] = plt.figure(figsize=(8, 4))
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
@@ -102,6 +104,7 @@ for k in files:
     ax0.plot(time, Yfit, color='red')
 
     ax1.plot(time, collisions/N, '.', markersize=15)
+    ax1.annotate("Collision to thermalize: {:.1f}".format(col2therm), xy=(0.05, 0.85), xycoords='axes fraction')
 
     j = 0
     for a in all_axes:
