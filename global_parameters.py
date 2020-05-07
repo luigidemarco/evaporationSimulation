@@ -25,6 +25,8 @@ global_parameters = {
     "m": 127 * u,  # Mass in kg
     "t": 300E-9,  # Initial temperature
     "inelastic": True,  # Set false to turn off inelastic collisions
+    "collision": 'differential',
+    "diffcsparams": [0.24, 0.21, 1.19, 7.03],
 
     "elasticcoeff": [-7.525E-6, 3.095E-4, - 4.731E-3, 2.913E-2, - 1.469E-3],
     "reactivecoeff": [5.763E-5, - 7.05277E-5],

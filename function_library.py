@@ -108,6 +108,24 @@ def set_global_parameters(input_file):
                         value = map(float, value)
                         global_parameters[parameter] = value
 
+                elif parameter == 'collision':
+                    if value.lower() in ('swave', 'differential'):
+                        global_parameters[parameter] = value
+                    else:
+                        raise ValueError('Expected \"collision\" parameter to be in (swave, differential),'
+                                         ' got {} instead'.format(value))
+
+                elif parameter == 'diffcsparams':
+                    value = value.replace(" ", "")
+                    value = value.split(",")
+                    value = map(float, value)
+                    if len(value) == 4:
+                        global_parameters[parameter] = value
+                        print(value)
+                    else:
+                        raise ValueError('\"DiffCSParams\" must be a comma separated list of 4 numbers in the order: '
+                                         'a, a\', alpha, alpha\' ')
+
                 else:
                     global_parameters[parameter] = value
 
@@ -137,6 +155,12 @@ def calculate_derived_parameters():
     derived_parameters['time'] = np.arange(0, global_parameters['tmax'] + global_parameters['tau'], global_parameters['tau'])
     derived_parameters['nT'] = len(derived_parameters['time'])
     derived_parameters['writeEveryInv'] = 1.0 / global_parameters['writeevery']
+
+    derived_parameters['anglerange'] = np.arange(np.pi/2.0, np.pi + 0.01, 0.01)
+    dcs = global_parameters['diffcsparams']
+    derived_parameters['differentialcs'] = (dcs[0]*(np.cos(derived_parameters['anglerange'])**2)**dcs[2]
+                                            + dcs[1]*(np.cos(derived_parameters['anglerange'])**2)**dcs[3])\
+                                           / (dcs[0] + dcs[1])
 
 def kinetic_energy(v):
     x = v * v * 1E-6
@@ -304,8 +328,14 @@ def collision_montecarlo(colList, V):
                 elasticSuccess.append(k)
 
                 # Generate an angle between pi and pi/2 at random for the rotation of the velocities
-                costheta = -np.random.random(1)[0]
-                sintheta = np.sqrt(1 - costheta * costheta)
+                if global_parameters['collision'] == 'swave':
+                    theta = (np.random.random(1)[0] + 1) * np.pi/2.0
+                elif global_parameters['collision'] == 'differential':
+                    theta = np.interp(np.random.random(1)[0], derived_parameters['differentialcs'],
+                                      derived_parameters['anglerange'])
+
+                costheta = np.cos(theta)
+                sintheta = np.sin(theta)
 
                 VCOM = 0.5 * np.array([V[k[0], 0] + V[k[1], 0], V[k[0], 1] + V[k[1], 1]])
                 VDIFROT = np.array([(dVx * costheta - dVy * sintheta), (dVx * sintheta + dVy * costheta)])
@@ -366,11 +396,17 @@ def write_params_file(params_file):
 
     f.write('########### Particle Parameters ###########\n\n')
     f.write(
-        'MASS: {} AMU\nTEMP: {} nK\nINELASTIC_COLL: {}\n\n'.format(global_parameters['m'] / u,
+        'MASS: {} AMU\nTEMP: {} nK\n\nINELASTIC_COLL: {}\n'.format(global_parameters['m'] / u,
                                                                       global_parameters['t'] * 1E9,
                                                                       global_parameters['inelastic']))
-    f.write('ELASTICCOEFF: {}\nREACTIVECOEFF: {}\n\n'.format(global_parameters['elasticcoeff'],
+    f.write('ELASTICCOEFF: {}\nREACTIVECOEFF: {}\n'.format(global_parameters['elasticcoeff'],
                                                              global_parameters['reactivecoeff']))
+
+    f.write('COLL_TYPE: {}\n'.format(global_parameters['collision']))
+    if global_parameters['collision'] == 'differential':
+        f.write('DIFF_CS_PARAMS: {}\n\n'.format(global_parameters['diffcsparams']))
+    else:
+        f.write('\n\n')
 
     f.write('########### Trap Parameters ###########\n\n')
     f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\nEVAP_RAMP: {} ms\n\n'.format(
