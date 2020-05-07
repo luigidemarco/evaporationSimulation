@@ -6,6 +6,7 @@ argv = sys.argv[1:]
 input_file, output_file, params_file = parse_inputs(argv)
 set_global_parameters(input_file)
 calculate_derived_parameters()
+trap_force = create_trap_force()
 
 """ ------- Generate Cross Sections ------- """
 

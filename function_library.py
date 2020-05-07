@@ -121,10 +121,16 @@ def set_global_parameters(input_file):
                     value = map(float, value)
                     if len(value) == 4:
                         global_parameters[parameter] = value
-                        print(value)
                     else:
                         raise ValueError('\"DiffCSParams\" must be a comma separated list of 4 numbers in the order: '
                                          'a, a\', alpha, alpha\' ')
+
+                elif parameter == 'trap':
+                    if value.lower() in ('gaussian', 'harmonic'):
+                        global_parameters[parameter] = value
+                    else:
+                        raise ValueError('Expected \"trap\" parameter to be in (gaussian, harmonic),'
+                                         ' got {} instead'.format(value))
 
                 else:
                     global_parameters[parameter] = value
@@ -174,21 +180,29 @@ def potential_energy(r):
     # Positions should be in Microns
     # return -Ud * 0.5 * (
     #        np.exp(-sigtrapinv * r[:, 0] * r[:, 0] * 1E-12) + np.exp(-sigtrapinv * r[:, 1] * r[:, 1] * 1E-12)) + Ud
+    if global_parameters['trap'] == 'gaussian':
+        return global_parameters['depth'] - global_parameters['depth'] \
+             * np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
+    elif global_parameters['trap'] == 'harmonic':
+        return 0.5*derived_parameters['fmax']*(r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12
 
-    return global_parameters['depth'] - global_parameters['depth'] \
-           * np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
 
-
-def trap_force(r):
-    # Accepts an N x 2 matrix of positions, and returns an N x 2 matrix of forces
+def create_trap_force():
+    # Accepts an N x 2 matrix of positions, and returns a function that produces an N x 2 matrix of forces
     # Positions should be in Microns
     # The force is returned in units of [kg*um/ms^2]
-    #     X = -fmax*np.array([r[:, 0]*1E-6*np.exp(-sigtrapinv*r[:, 0]*r[:, 0]*1E-12),
-    #     r[:,1]*1E-6*np.exp(-sigtrapinv*r[:, 1]*r[:, 1]*1E-12)])
+    if global_parameters['trap'] == 'gaussian':
+        def f(r):
+            x = -derived_parameters['fmax'] * np.multiply(np.exp(-derived_parameters['sigtrapinv']
+                                                                 * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12),
+                                                          r.T * 1E-6)
+            return x.T
+    elif global_parameters['trap'] == 'harmonic':
+        def f(r):
+            x = - derived_parameters['fmax'] * r * 1E-6
+            return x
 
-    X = -derived_parameters['fmax'] * np.multiply(np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12), r.T * 1E-6)
-    return X.T
-
+    return f
 
 def evap_force(r, t):
     if t <= global_parameters['equilibrationtime']:
@@ -402,13 +416,14 @@ def write_params_file(params_file):
     f.write('ELASTICCOEFF: {}\nREACTIVECOEFF: {}\n'.format(global_parameters['elasticcoeff'],
                                                              global_parameters['reactivecoeff']))
 
-    f.write('COLL_TYPE: {}\n'.format(global_parameters['collision']))
+    f.write('COLL_TYPE: {}\n'.format(global_parameters['collision'].upper()))
     if global_parameters['collision'] == 'differential':
         f.write('DIFF_CS_PARAMS: {}\n\n'.format(global_parameters['diffcsparams']))
     else:
         f.write('\n\n')
 
     f.write('########### Trap Parameters ###########\n\n')
+    f.write('TRAP: {}\n'.format(global_parameters['trap'].upper()))
     f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\nEVAP_RAMP: {} ms\n\n'.format(
                                                                  global_parameters['depth'] / kB * 1E6,
                                                                  global_parameters['freq'] / (2.0 * np.pi),

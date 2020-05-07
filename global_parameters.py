@@ -32,6 +32,7 @@ global_parameters = {
     "reactivecoeff": [5.763E-5, - 7.05277E-5],
 
     # --------------------------------------- Trap parameters
+    "trap": 'gaussian',
     "depth": 2.5 * 1E-6 * kB,  # Trap depth in J
     "freq": 2 * np.pi * 35,
 
