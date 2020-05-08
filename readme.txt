@@ -73,6 +73,7 @@ DiffCSParams            Differential cross-section parameters
 Bound                   Boundary at which particles are removed [um]        150
 CollisionCutOff         Cutoff at which a collision can occur [um]          0.05
 
+Trap                    Specify: "Harmonic" or "Gaussian"                   Gaussian
 Depth                   Trap depth [uK]                                     2.5
 Freq                    Trap frequency [Hz]                                 35
 A                       Evaporation gradient parameter                      0.0
