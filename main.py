@@ -6,6 +6,7 @@ argv = sys.argv[1:]
 input_file, output_file, params_file = parse_inputs(argv)
 set_global_parameters(input_file)
 calculate_derived_parameters()
+trap_force = create_trap_force()
 
 """ ------- Generate Cross Sections ------- """
 
@@ -24,6 +25,7 @@ V0 = initialize_velocities(global_parameters['n'])
 
 if global_parameters['nonequilibrium']:
     V0[:, 0] = V0[:, 0] * np.sqrt(global_parameters['nonequilibrium'])
+    R0[:, 0] = R0[:, 0] * np.sqrt(global_parameters['nonequilibrium'])
 
 # R0 = np.array([[10,0.00],[-10,-0.00]])
 # V0 = np.array([[-15,0],[15,0]])

@@ -60,10 +60,15 @@ EquilibrationTime       Time before evaporation starts [ms]                 0.0
 N                       Number of particles                                 20
 M                       Mass of particle [amu]                              127
 T                       Starting temperature [nK]                           300
+Nonequilibrium          Initial Temperature Scaling for X-Axis              0.0
+
 Inelastic               Whether inelastic collisions occur                  True
 ElasticCoeff            Elastic cross section polynomial coefficients       KRb @ 0.2 D
 ReactiveCoeff           Reactive cross section polynomial coefficients      KRb @ 0.2 D
-Nonequilibrium          Initial Temperature Scaling for X-Axis              0.0
+Collision               Specify "swave" or "differential" collision type    differential
+DiffCSParams            Differential cross-section parameters
+                        corresponding to Eq. 1 in ArXiV 1311.0429
+                        Comma separated list: a, a', alpha, alpha'          KRb @ 0.2 D and 100 nK
 
 Bound                   Boundary at which particles are removed [um]        150
 CollisionCutOff         Cutoff at which a collision can occur [um]          0.05

@@ -108,6 +108,30 @@ def set_global_parameters(input_file):
                         value = map(float, value)
                         global_parameters[parameter] = value
 
+                elif parameter == 'collision':
+                    if value.lower() in ('swave', 'differential'):
+                        global_parameters[parameter] = value
+                    else:
+                        raise ValueError('Expected \"collision\" parameter to be in (swave, differential),'
+                                         ' got {} instead'.format(value))
+
+                elif parameter == 'diffcsparams':
+                    value = value.replace(" ", "")
+                    value = value.split(",")
+                    value = map(float, value)
+                    if len(value) == 4:
+                        global_parameters[parameter] = value
+                    else:
+                        raise ValueError('\"DiffCSParams\" must be a comma separated list of 4 numbers in the order: '
+                                         'a, a\', alpha, alpha\' ')
+
+                elif parameter == 'trap':
+                    if value.lower() in ('gaussian', 'harmonic'):
+                        global_parameters[parameter] = value
+                    else:
+                        raise ValueError('Expected \"trap\" parameter to be in (gaussian, harmonic),'
+                                         ' got {} instead'.format(value))
+
                 else:
                     global_parameters[parameter] = value
 
@@ -138,6 +162,12 @@ def calculate_derived_parameters():
     derived_parameters['nT'] = len(derived_parameters['time'])
     derived_parameters['writeEveryInv'] = 1.0 / global_parameters['writeevery']
 
+    derived_parameters['anglerange'] = np.arange(np.pi/2.0, np.pi + 0.01, 0.01)
+    dcs = global_parameters['diffcsparams']
+    derived_parameters['differentialcs'] = (dcs[0]*(np.cos(derived_parameters['anglerange'])**2)**dcs[2]
+                                            + dcs[1]*(np.cos(derived_parameters['anglerange'])**2)**dcs[3])\
+                                           / (dcs[0] + dcs[1])
+
 def kinetic_energy(v):
     x = v * v * 1E-6
     if global_parameters['nonequilibrium']:
@@ -150,21 +180,29 @@ def potential_energy(r):
     # Positions should be in Microns
     # return -Ud * 0.5 * (
     #        np.exp(-sigtrapinv * r[:, 0] * r[:, 0] * 1E-12) + np.exp(-sigtrapinv * r[:, 1] * r[:, 1] * 1E-12)) + Ud
+    if global_parameters['trap'] == 'gaussian':
+        return global_parameters['depth'] - global_parameters['depth'] \
+             * np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
+    elif global_parameters['trap'] == 'harmonic':
+        return 0.5*derived_parameters['fmax']*(r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12
 
-    return global_parameters['depth'] - global_parameters['depth'] \
-           * np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12)
 
-
-def trap_force(r):
-    # Accepts an N x 2 matrix of positions, and returns an N x 2 matrix of forces
+def create_trap_force():
+    # Accepts an N x 2 matrix of positions, and returns a function that produces an N x 2 matrix of forces
     # Positions should be in Microns
     # The force is returned in units of [kg*um/ms^2]
-    #     X = -fmax*np.array([r[:, 0]*1E-6*np.exp(-sigtrapinv*r[:, 0]*r[:, 0]*1E-12),
-    #     r[:,1]*1E-6*np.exp(-sigtrapinv*r[:, 1]*r[:, 1]*1E-12)])
+    if global_parameters['trap'] == 'gaussian':
+        def f(r):
+            x = -derived_parameters['fmax'] * np.multiply(np.exp(-derived_parameters['sigtrapinv']
+                                                                 * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12),
+                                                          r.T * 1E-6)
+            return x.T
+    elif global_parameters['trap'] == 'harmonic':
+        def f(r):
+            x = - derived_parameters['fmax'] * r * 1E-6
+            return x
 
-    X = -derived_parameters['fmax'] * np.multiply(np.exp(-derived_parameters['sigtrapinv'] * (r[:, 0] * r[:, 0] + r[:, 1] * r[:, 1]) * 1E-12), r.T * 1E-6)
-    return X.T
-
+    return f
 
 def evap_force(r, t):
     if t <= global_parameters['equilibrationtime']:
@@ -304,8 +342,14 @@ def collision_montecarlo(colList, V):
                 elasticSuccess.append(k)
 
                 # Generate an angle between pi and pi/2 at random for the rotation of the velocities
-                costheta = -np.random.random(1)[0]
-                sintheta = np.sqrt(1 - costheta * costheta)
+                if global_parameters['collision'] == 'swave':
+                    theta = (np.random.random(1)[0] + 1) * np.pi/2.0
+                elif global_parameters['collision'] == 'differential':
+                    theta = np.interp(np.random.random(1)[0], derived_parameters['differentialcs'],
+                                      derived_parameters['anglerange'])
+
+                costheta = np.cos(theta)
+                sintheta = np.sin(theta)
 
                 VCOM = 0.5 * np.array([V[k[0], 0] + V[k[1], 0], V[k[0], 1] + V[k[1], 1]])
                 VDIFROT = np.array([(dVx * costheta - dVy * sintheta), (dVx * sintheta + dVy * costheta)])
@@ -366,13 +410,20 @@ def write_params_file(params_file):
 
     f.write('########### Particle Parameters ###########\n\n')
     f.write(
-        'MASS: {} AMU\nTEMP: {} nK\nINELASTIC_COLL: {}\n\n'.format(global_parameters['m'] / u,
+        'MASS: {} AMU\nTEMP: {} nK\n\nINELASTIC_COLL: {}\n'.format(global_parameters['m'] / u,
                                                                       global_parameters['t'] * 1E9,
                                                                       global_parameters['inelastic']))
-    f.write('ELASTICCOEFF: {}\nREACTIVECOEFF: {}\n\n'.format(global_parameters['elasticcoeff'],
+    f.write('ELASTICCOEFF: {}\nREACTIVECOEFF: {}\n'.format(global_parameters['elasticcoeff'],
                                                              global_parameters['reactivecoeff']))
 
+    f.write('COLL_TYPE: {}\n'.format(global_parameters['collision'].upper()))
+    if global_parameters['collision'] == 'differential':
+        f.write('DIFF_CS_PARAMS: {}\n\n'.format(global_parameters['diffcsparams']))
+    else:
+        f.write('\n\n')
+
     f.write('########### Trap Parameters ###########\n\n')
+    f.write('TRAP: {}\n'.format(global_parameters['trap'].upper()))
     f.write('DEPTH: {} uK\nFREQ: {} Hz\nA: {}\nB: {}\nEVAP_RAMP: {} ms\n\n'.format(
                                                                  global_parameters['depth'] / kB * 1E6,
                                                                  global_parameters['freq'] / (2.0 * np.pi),
