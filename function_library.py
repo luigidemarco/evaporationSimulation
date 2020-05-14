@@ -110,7 +110,7 @@ def set_global_parameters(input_file):
 
                 elif parameter == 'collision':
                     if value.lower() in ('swave', 'differential'):
-                        global_parameters[parameter] = value
+                        global_parameters[parameter] = value.lower()
                     else:
                         raise ValueError('Expected \"collision\" parameter to be in (swave, differential),'
                                          ' got {} instead'.format(value))
@@ -127,7 +127,7 @@ def set_global_parameters(input_file):
 
                 elif parameter == 'trap':
                     if value.lower() in ('gaussian', 'harmonic'):
-                        global_parameters[parameter] = value
+                        global_parameters[parameter] = value.lower()
                     else:
                         raise ValueError('Expected \"trap\" parameter to be in (gaussian, harmonic),'
                                          ' got {} instead'.format(value))
