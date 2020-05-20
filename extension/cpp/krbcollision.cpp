@@ -1,3 +1,8 @@
+/**
+* krbcollsion.cpp
+* C++ extension module for finding collision pairs.
+**/
+
 #include <Python.h>
 #include <vector>
 #include <math.h>
@@ -10,10 +15,13 @@ typedef struct coords_t {
 typedef struct pair_coords_t {
 	double x;
 	double y;
-	int i1;
-	int i2;
+	int i1; // index of particle 1
+	int i2; // index of particle 2
 } pair_coords_t;
 
+// Find the pairs of particles within distance colcut
+// assuming the input vector r is sorted
+// by the x-coordinate
 static std::vector<pair_coords_t>
 find_pairs(std::vector<coords_t> r, double colcut) {
 	int l = (int) r.size();
@@ -40,6 +48,9 @@ find_pairs(std::vector<coords_t> r, double colcut) {
 	return out;
 }
 
+// Translates Python objects to C++ objects and vice versa
+// C++ extension boilerplate
+// See https://docs.python.org/2.7/extending/extending.html
 static PyObject*
 krbcollision_find_pairs(PyObject* self, PyObject* args) {
 	PyObject* input;
@@ -80,6 +91,8 @@ krbcollision_find_pairs(PyObject* self, PyObject* args) {
 	return output;
 }
 
+// C++ extension boilerplate
+// See https://docs.python.org/2.7/extending/extending.html
 static PyMethodDef CollisionMethods[] = {
 	{"find_pairs", krbcollision_find_pairs, METH_VARARGS,
 	"Find collision pair candidates."},

@@ -1,5 +1,6 @@
 """ 
 Use distutils to make a module
+See https://docs.python.org/2.7/extending/building.html
 
 1) python setup_linux.py build
 2) python setup_linux.py install
