@@ -15,6 +15,7 @@ Simulations are greatly sped up via a C++ extension to deal with collisions:
     To build and install extension: "python setup.py"
     Need setuptools and distutils installed.
     For Windows, need Microsoft Visual C++ Compiler for Python 2.7.
+    For Mac, need Xcode command line tools installed. May also need to run setup.py as root.
     After installing, should be able to "import krbcollision" in Python.
 
 ############################################################################################
