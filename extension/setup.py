@@ -3,11 +3,9 @@ import os
 
 plt = platform.system()
 
-if plt == "Linux":
-	os.system("python setup_linux.py build")
-	os.system("python setup_linux.py install")
+if plt == "Linux" or plt == "Darwin":
+    os.system("python setup_linux.py build")
+    os.system("python setup_linux.py install")
 elif plt == "Windows":
-	os.system("python setup_win.py build")
-	os.system("python setup_win.py install")
-elif plt == "Darwin":
-	print("Sorry, MacOS not yet supported.")
+    os.system("python setup_win.py build")
+    os.system("python setup_win.py install")
